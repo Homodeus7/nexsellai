@@ -1,8 +1,8 @@
-import { Router } from 'express';
-import { z } from 'zod/v4';
-import { prisma } from '../lib/prisma.js';
-import { validate } from '../middleware/validate.js';
-import { createPayment } from '../services/freedom-pay.js';
+import { Router } from "express";
+import { z } from "zod/v4";
+import { prisma } from "../lib/prisma.js";
+import { validate } from "../../middleware/validate.js";
+import { createPayment } from "../services/freedom-pay.js";
 
 const router = Router();
 
@@ -14,12 +14,12 @@ const createOrderSchema = z.object({
 });
 
 // POST /api/orders — create new order
-router.post('/', validate(createOrderSchema), async (req, res) => {
+router.post("/", validate(createOrderSchema), async (req, res) => {
   const { plan_id, customer_email, customer_phone, customer_tg } = req.body;
 
   const plan = await prisma.plan.findUnique({ where: { id: plan_id } });
   if (!plan || !plan.is_active) {
-    res.status(404).json({ success: false, error: 'Plan not found' });
+    res.status(404).json({ success: false, error: "Plan not found" });
     return;
   }
 
@@ -33,7 +33,11 @@ router.post('/', validate(createOrderSchema), async (req, res) => {
     },
   });
 
-  const payment = await createPayment(order.order_uid, order.amount, plan.currency);
+  const payment = await createPayment(
+    order.order_uid,
+    order.amount,
+    plan.currency,
+  );
 
   await prisma.order.update({
     where: { id: order.id },
@@ -50,7 +54,7 @@ router.post('/', validate(createOrderSchema), async (req, res) => {
 });
 
 // GET /api/orders/:uid/status — check order status
-router.get('/:uid/status', async (req, res) => {
+router.get("/:uid/status", async (req, res) => {
   const order = await prisma.order.findUnique({
     where: { order_uid: req.params.uid },
     select: {
@@ -63,7 +67,7 @@ router.get('/:uid/status', async (req, res) => {
   });
 
   if (!order) {
-    res.status(404).json({ success: false, error: 'Order not found' });
+    res.status(404).json({ success: false, error: "Order not found" });
     return;
   }
 

@@ -1,6 +1,6 @@
 import { Router } from "express";
 import { prisma } from "../../lib/prisma.js";
-import { adminGuardMiddleware } from "@/middleware/admin-guard.js";
+import { adminGuardMiddleware } from "../../middleware/admin-guard.js";
 
 const router = Router();
 router.use(adminGuardMiddleware);
