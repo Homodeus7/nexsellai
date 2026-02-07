@@ -1,9 +1,9 @@
-import { PrismaClient } from '../generated/prisma/client.js';
-import { PrismaBetterSqlite3 } from '@prisma/adapter-better-sqlite3';
-import bcrypt from 'bcryptjs';
+import { PrismaClient } from "@prisma/client/extension";
+import { PrismaBetterSqlite3 } from "@prisma/adapter-better-sqlite3";
+import bcrypt from "bcryptjs";
 
 const adapter = new PrismaBetterSqlite3({
-  url: process.env.DATABASE_URL || 'file:./dev.db',
+  url: process.env.DATABASE_URL || "file:./dev.db",
 });
 
 const prisma = new PrismaClient({ adapter });
@@ -12,24 +12,24 @@ async function main() {
   // Seed plans
   const plans = [
     {
-      name: 'Базовый',
-      description: 'Доступ к каналу на 30 дней',
+      name: "Базовый",
+      description: "Доступ к каналу на 30 дней",
       price: 5000,
-      currency: 'KZT',
+      currency: "KZT",
       duration_days: 30,
     },
     {
-      name: 'Стандарт',
-      description: 'Доступ к каналу на 90 дней',
+      name: "Стандарт",
+      description: "Доступ к каналу на 90 дней",
       price: 12000,
-      currency: 'KZT',
+      currency: "KZT",
       duration_days: 90,
     },
     {
-      name: 'Премиум',
-      description: 'Доступ к каналу на 365 дней',
+      name: "Премиум",
+      description: "Доступ к каналу на 365 дней",
       price: 40000,
-      currency: 'KZT',
+      currency: "KZT",
       duration_days: 365,
     },
   ];
@@ -41,19 +41,19 @@ async function main() {
       create: plan,
     });
   }
-  console.log('Plans seeded');
+  console.log("Plans seeded");
 
   // Seed admin user
-  const passwordHash = await bcrypt.hash('admin123', 10);
+  const passwordHash = await bcrypt.hash("admin123", 10);
   await prisma.adminUser.upsert({
-    where: { login: 'admin' },
+    where: { login: "admin" },
     update: { password_hash: passwordHash },
     create: {
-      login: 'admin',
+      login: "admin",
       password_hash: passwordHash,
     },
   });
-  console.log('Admin user seeded (login: admin, password: admin123)');
+  console.log("Admin user seeded (login: admin, password: admin123)");
 }
 
 main()
