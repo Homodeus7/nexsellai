@@ -1,7 +1,7 @@
 import { Router } from "express";
 import { z } from "zod/v4";
 import { prisma } from "../../lib/prisma.js";
-import { validate } from "../../../middleware/validate.js";
+import { validate } from "../../middleware/validate.js";
 import { adminGuardMiddleware } from "../../middleware/admin-guard.js";
 
 const router = Router();
