@@ -1,11 +1,10 @@
 import { env } from "./config/env.js";
 import app from "./app.js";
 
-(() => {
+if (process.env.VERCEL !== "1") {
   app.listen(env.PORT, () => {
     console.log(`Server running on http://localhost:${env.PORT}`);
   });
-  app.get("/", (req, res) => {
-    res.send("API is running...");
-  });
-})();
+}
+
+export default app;

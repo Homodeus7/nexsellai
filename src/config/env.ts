@@ -5,7 +5,7 @@ dotenv.config();
 
 const envSchema = z.object({
   PORT: z.coerce.number().default(3001),
-  DATABASE_URL: z.string().default('file:./dev.db'),
+  DATABASE_URL: z.string().min(1),
   JWT_SECRET: z.string().min(1),
   FREEDOM_PAY_MERCHANT_ID: z.string().min(1),
   FREEDOM_PAY_SECRET_KEY: z.string().min(1),
