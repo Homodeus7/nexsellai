@@ -1,0 +1,60 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Plan {
+  id            Int      @id @default(autoincrement())
+  name          String
+  description   String?
+  price         Float
+  currency      String   @default("KZT")
+  duration_days Int
+  is_active     Boolean  @default(true)
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  orders Order[]
+}
+
+model Order {
+  id                 Int         @id @default(autoincrement())
+  order_uid          String      @unique @default(uuid())
+  plan_id            Int
+  plan               Plan        @relation(fields: [plan_id], references: [id])
+  customer_email     String?
+  customer_phone     String?
+  customer_tg        String?
+  amount             Float
+  status             String      @default("pending")
+  freedom_payment_id String?
+  paid_at            DateTime?
+  created_at         DateTime    @default(now())
+  updated_at         DateTime    @updatedAt
+
+  accesses Access[]
+}
+
+model Access {
+  id          Int       @id @default(autoincrement())
+  order_id    Int
+  order       Order     @relation(fields: [order_id], references: [id])
+  tg_user_id  String?
+  invite_link String?
+  expires_at  DateTime
+  is_revoked  Boolean   @default(false)
+  created_at  DateTime  @default(now())
+  updated_at  DateTime  @updatedAt
+}
+
+model AdminUser {
+  id            Int      @id @default(autoincrement())
+  login         String   @unique
+  password_hash String
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+}
