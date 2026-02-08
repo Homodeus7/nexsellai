@@ -14,6 +14,8 @@ model Plan {
   currency      String   @default("KZT")
   duration_days Int
   is_active     Boolean  @default(true)
+  plan_group    String?
+  sort_order    Int?
   created_at    DateTime @default(now())
   updated_at    DateTime @updatedAt
 

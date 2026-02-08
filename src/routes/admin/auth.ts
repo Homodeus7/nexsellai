@@ -33,7 +33,7 @@ router.post("/login", validate(loginSchema), async (req, res) => {
     expiresIn: "24h",
   });
 
-  res.json({ success: true, data: { token } });
+  res.json({ token });
 });
 
 export default router;

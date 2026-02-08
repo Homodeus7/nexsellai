@@ -24,6 +24,20 @@ router.get("/", async (_req, res) => {
   res.json({ success: true, data: plans });
 });
 
+// GET /api/admin/plans/:id
+router.get("/:id", async (req, res) => {
+  const plan = await prisma.plan.findUnique({
+    where: { id: Number(req.params.id) },
+  });
+
+  if (!plan) {
+    res.status(404).json({ success: false, error: "Plan not found" });
+    return;
+  }
+
+  res.json({ success: true, data: plan });
+});
+
 // POST /api/admin/plans
 router.post("/", validate(planSchema), async (req, res) => {
   const plan = await prisma.plan.create({ data: req.body });
