@@ -1,24 +1,27 @@
-import crypto from 'crypto';
-import { env } from '../config/env.js';
+import crypto from "crypto";
+import { env } from "../config/env.js";
 
 export interface PaymentResult {
   payment_id: string;
   payment_url: string;
 }
 
-type FreedomPayParams = Record<string, string | number | boolean | null | undefined>;
+type FreedomPayParams = Record<
+  string,
+  string | number | boolean | null | undefined
+>;
 
-const INIT_PAYMENT_PATH = '/init_payment';
+const INIT_PAYMENT_PATH = "/init_payment.php";
 
 export function getScriptNameFromPath(pathname: string): string {
-  const normalized = pathname.split('?')[0].replace(/\/+$/, '');
-  const parts = normalized.split('/').filter(Boolean);
+  const normalized = pathname.split("?")[0].replace(/\/+$/, "");
+  const parts = normalized.split("/").filter(Boolean);
   return parts[parts.length - 1] || normalized;
 }
 
 function makeFlatParamsArray(
   params: Record<string, unknown>,
-  parentKey = '',
+  parentKey = "",
   result: Record<string, string> = {},
 ): Record<string, string> {
   Object.entries(params).forEach(([key, value]) => {
@@ -33,8 +36,12 @@ function makeFlatParamsArray(
         if (item === undefined || item === null) {
           return;
         }
-        if (typeof item === 'object') {
-          makeFlatParamsArray(item as Record<string, unknown>, `${composedKey}[${index}]`, result);
+        if (typeof item === "object") {
+          makeFlatParamsArray(
+            item as Record<string, unknown>,
+            `${composedKey}[${index}]`,
+            result,
+          );
         } else {
           result[`${composedKey}[${index}]`] = String(item);
         }
@@ -42,8 +49,12 @@ function makeFlatParamsArray(
       return;
     }
 
-    if (typeof value === 'object') {
-      makeFlatParamsArray(value as Record<string, unknown>, composedKey, result);
+    if (typeof value === "object") {
+      makeFlatParamsArray(
+        value as Record<string, unknown>,
+        composedKey,
+        result,
+      );
       return;
     }
 
@@ -53,18 +64,28 @@ function makeFlatParamsArray(
   return result;
 }
 
-function computeSignature(scriptName: string, params: Record<string, unknown>): string {
+function computeSignature(
+  scriptName: string,
+  params: Record<string, unknown>,
+): string {
   const flatParams = makeFlatParamsArray(params);
   const sortedKeys = Object.keys(flatParams).sort();
-  const signatureParts = [scriptName, ...sortedKeys.map((key) => flatParams[key]), env.FREEDOM_PAY_SECRET_KEY];
-  const signatureString = signatureParts.join(';');
-  return crypto.createHash('md5').update(signatureString).digest('hex');
+  const signatureParts = [
+    scriptName,
+    ...sortedKeys.map((key) => flatParams[key]),
+    env.FREEDOM_PAY_SECRET_KEY,
+  ];
+  const signatureString = signatureParts.join(";");
+  return crypto.createHash("md5").update(signatureString).digest("hex");
 }
 
-function buildSignedParams(scriptName: string, params: FreedomPayParams): Record<string, string> {
+function buildSignedParams(
+  scriptName: string,
+  params: FreedomPayParams,
+): Record<string, string> {
   const cleanedParams: Record<string, string> = {};
   Object.entries(params).forEach(([key, value]) => {
-    if (value === undefined || value === null || value === '') {
+    if (value === undefined || value === null || value === "") {
       return;
     }
     cleanedParams[key] = String(value);
@@ -75,7 +96,7 @@ function buildSignedParams(scriptName: string, params: FreedomPayParams): Record
 }
 
 function getXmlValue(xml: string, tag: string): string | null {
-  const match = xml.match(new RegExp(`<${tag}>([\\s\\S]*?)</${tag}>`, 'i'));
+  const match = xml.match(new RegExp(`<${tag}>([\\s\\S]*?)</${tag}>`, "i"));
   return match ? match[1].trim() : null;
 }
 
@@ -85,7 +106,7 @@ export async function createPayment(
   currency: string,
   description: string,
 ): Promise<PaymentResult> {
-  const pg_salt = crypto.randomBytes(16).toString('hex');
+  const pg_salt = crypto.randomBytes(16).toString("hex");
   const amountValue = Number(amount).toFixed(2);
 
   const params: FreedomPayParams = {
@@ -97,9 +118,9 @@ export async function createPayment(
     pg_result_url: env.FREEDOM_PAY_RESULT_URL,
     pg_success_url: env.FREEDOM_PAY_SUCCESS_URL,
     pg_failure_url: env.FREEDOM_PAY_FAILURE_URL,
-    pg_request_method: 'POST',
-    pg_success_url_method: 'GET',
-    pg_failure_url_method: 'GET',
+    pg_request_method: "POST",
+    pg_success_url_method: "GET",
+    pg_failure_url_method: "GET",
     pg_testing_mode: env.FREEDOM_PAY_TESTING_MODE,
     pg_salt,
   };
@@ -109,32 +130,40 @@ export async function createPayment(
 
   const url = new URL(INIT_PAYMENT_PATH, env.FREEDOM_PAY_API_BASE_URL);
   const response = await fetch(url.toString(), {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(signedParams),
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: new URLSearchParams(signedParams).toString(),
   });
 
   const responseText = await response.text();
-  const status = getXmlValue(responseText, 'pg_status');
-  if (!response.ok || status !== 'ok') {
-    const errorCode = getXmlValue(responseText, 'pg_error_code');
-    const descriptionText = getXmlValue(responseText, 'pg_error_description') || getXmlValue(responseText, 'pg_description');
+  const status = getXmlValue(responseText, "pg_status");
+  if (!response.ok || status !== "ok") {
+    const errorCode = getXmlValue(responseText, "pg_error_code");
+    const descriptionText =
+      getXmlValue(responseText, "pg_error_description") ||
+      getXmlValue(responseText, "pg_description");
     throw new Error(
-      `[FreedomPay] init_payment failed: status=${status ?? response.status} code=${errorCode ?? 'n/a'} desc=${descriptionText ?? 'n/a'}`,
+      `[FreedomPay] init_payment failed: status=${status ?? response.status} code=${errorCode ?? "n/a"} desc=${descriptionText ?? "n/a"}`,
     );
   }
 
-  const payment_id = getXmlValue(responseText, 'pg_payment_id');
-  const payment_url = getXmlValue(responseText, 'pg_redirect_url');
+  const payment_id = getXmlValue(responseText, "pg_payment_id");
+  const payment_url = getXmlValue(responseText, "pg_redirect_url");
 
   if (!payment_id || !payment_url) {
-    throw new Error('[FreedomPay] init_payment response missing payment_id or payment_url');
+    throw new Error(
+      "[FreedomPay] init_payment response missing payment_id or payment_url",
+    );
   }
 
   return { payment_id, payment_url };
 }
 
-export function verifyWebhookSignature(body: Record<string, unknown>, signature: string, scriptName: string): boolean {
+export function verifyWebhookSignature(
+  body: Record<string, unknown>,
+  signature: string,
+  scriptName: string,
+): boolean {
   const params = { ...body } as Record<string, unknown>;
   delete params.pg_sig;
   const expected = computeSignature(scriptName, params);
@@ -143,10 +172,10 @@ export function verifyWebhookSignature(body: Record<string, unknown>, signature:
 
 export function buildWebhookResponse(
   scriptName: string,
-  status: 'ok' | 'error',
+  status: "ok" | "error",
   description: string,
 ): string {
-  const pg_salt = crypto.randomBytes(16).toString('hex');
+  const pg_salt = crypto.randomBytes(16).toString("hex");
   const params = {
     pg_status: status,
     pg_description: description,
@@ -163,26 +192,43 @@ export function buildWebhookResponse(
 </response>`;
 }
 
-export function normalizeCallbackStatus(payload: Record<string, unknown>): 'success' | 'failed' | 'unknown' {
-  const rawStatus = String(payload.pg_status ?? payload.status ?? '').toLowerCase();
-  const rawResult = String(payload.pg_result ?? '').toLowerCase();
+export function normalizeCallbackStatus(
+  payload: Record<string, unknown>,
+): "success" | "failed" | "unknown" {
+  const rawStatus = String(
+    payload.pg_status ?? payload.status ?? "",
+  ).toLowerCase();
+  const rawResult = String(payload.pg_result ?? "").toLowerCase();
 
-  if (rawStatus === 'success' || rawStatus === 'paid' || rawStatus === 'ok' || rawResult === '1' || rawResult === 'true') {
-    return 'success';
+  if (
+    rawStatus === "success" ||
+    rawStatus === "paid" ||
+    rawStatus === "ok" ||
+    rawResult === "1" ||
+    rawResult === "true"
+  ) {
+    return "success";
   }
 
-  if (rawStatus === 'failed' || rawStatus === 'error' || rawStatus === 'rejected' || rawResult === '0' || rawResult === 'false') {
-    return 'failed';
+  if (
+    rawStatus === "failed" ||
+    rawStatus === "error" ||
+    rawStatus === "rejected" ||
+    rawResult === "0" ||
+    rawResult === "false"
+  ) {
+    return "failed";
   }
 
-  return 'unknown';
+  return "unknown";
 }
 
 export function extractPaymentIdentifiers(payload: Record<string, unknown>): {
   paymentId?: string;
   orderId?: string;
 } {
-  const paymentId = payload.pg_payment_id ?? payload.order_id ?? payload.payment_id;
+  const paymentId =
+    payload.pg_payment_id ?? payload.order_id ?? payload.payment_id;
   const orderId = payload.pg_order_id ?? payload.order_uid ?? payload.orderId;
 
   return {
