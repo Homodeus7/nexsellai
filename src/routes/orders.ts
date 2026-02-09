@@ -33,10 +33,12 @@ router.post("/", validate(createOrderSchema), async (req, res) => {
     },
   });
 
+  const description = plan.description || plan.name || `Order ${order.order_uid}`;
   const payment = await createPayment(
     order.order_uid,
     order.amount,
     plan.currency,
+    description,
   );
 
   await prisma.order.update({

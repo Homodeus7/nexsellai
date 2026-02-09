@@ -9,6 +9,11 @@ const envSchema = z.object({
   JWT_SECRET: z.string().min(1),
   FREEDOM_PAY_MERCHANT_ID: z.string().min(1),
   FREEDOM_PAY_SECRET_KEY: z.string().min(1),
+  FREEDOM_PAY_API_BASE_URL: z.string().min(1).default('https://api.freedompay.kz'),
+  FREEDOM_PAY_RESULT_URL: z.string().min(1),
+  FREEDOM_PAY_SUCCESS_URL: z.string().min(1),
+  FREEDOM_PAY_FAILURE_URL: z.string().min(1),
+  FREEDOM_PAY_TESTING_MODE: z.coerce.number().int().default(1),
   TELEGRAM_BOT_TOKEN: z.string().min(1),
   TELEGRAM_CHANNEL_ID: z.string().min(1),
 });

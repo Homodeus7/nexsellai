@@ -18,6 +18,7 @@ app.use(cors());
 app.use(helmet());
 app.use(morgan('dev'));
 app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
 
 // Public routes
 app.use('/api/plans', plansRouter);

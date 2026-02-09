@@ -1,6 +1,12 @@
 import { Router } from 'express';
 import { prisma } from '../lib/prisma.js';
-import { verifyWebhookSignature } from '../services/freedom-pay.js';
+import {
+  buildWebhookResponse,
+  extractPaymentIdentifiers,
+  getScriptNameFromPath,
+  normalizeCallbackStatus,
+  verifyWebhookSignature,
+} from '../services/freedom-pay.js';
 import { createInviteLink } from '../services/telegram.js';
 import { sendInviteToUser } from '../services/notification.js';
 
@@ -8,25 +14,37 @@ const router = Router();
 
 // POST /api/webhooks/freedom — handle Freedom Pay webhook
 router.post('/freedom', async (req, res) => {
-  const signature = req.headers['x-signature'] as string || '';
+  const scriptName = getScriptNameFromPath(req.path);
+  const signature = (req.body?.pg_sig as string | undefined) || (req.headers['x-signature'] as string | undefined) || '';
 
-  if (!verifyWebhookSignature(req.body, signature)) {
-    res.status(400).json({ success: false, error: 'Invalid signature' });
+  if (!verifyWebhookSignature(req.body, signature, scriptName)) {
+    const xml = buildWebhookResponse(scriptName, 'error', 'Invalid signature');
+    res.status(400).type('application/xml').send(xml);
     return;
   }
 
-  const { order_id: freedomPaymentId, status } = req.body as {
-    order_id: string;
-    status: string;
-  };
+  const identifiers = extractPaymentIdentifiers(req.body as Record<string, unknown>);
+  const status = normalizeCallbackStatus(req.body as Record<string, unknown>);
+
+  if (!identifiers.paymentId && !identifiers.orderId) {
+    const xml = buildWebhookResponse(scriptName, 'error', 'Missing identifiers');
+    res.status(400).type('application/xml').send(xml);
+    return;
+  }
+
+  const orConditions = [
+    identifiers.paymentId ? { freedom_payment_id: identifiers.paymentId } : undefined,
+    identifiers.orderId ? { order_uid: identifiers.orderId } : undefined,
+  ].filter(Boolean) as Record<string, string>[];
 
   const order = await prisma.order.findFirst({
-    where: { freedom_payment_id: freedomPaymentId },
+    where: { OR: orConditions },
     include: { plan: true },
   });
 
   if (!order) {
-    res.status(404).json({ success: false, error: 'Order not found' });
+    const xml = buildWebhookResponse(scriptName, 'error', 'Order not found');
+    res.status(404).type('application/xml').send(xml);
     return;
   }
 
@@ -63,7 +81,8 @@ router.post('/freedom', async (req, res) => {
     });
   }
 
-  res.json({ success: true });
+  const xml = buildWebhookResponse(scriptName, 'ok', 'Accepted');
+  res.type('application/xml').send(xml);
 });
 
 export default router;
