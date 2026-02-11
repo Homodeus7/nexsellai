@@ -59,12 +59,15 @@ router.post("/", validate(createOrderSchema), async (req, res) => {
 router.get("/:uid/status", async (req, res) => {
   const order = await prisma.order.findUnique({
     where: { order_uid: req.params.uid },
-    select: {
-      order_uid: true,
-      status: true,
-      amount: true,
-      paid_at: true,
-      created_at: true,
+    include: {
+      accesses: {
+        where: { is_revoked: false },
+        select: {
+          invite_link: true,
+          expires_at: true,
+          created_at: true,
+        },
+      },
     },
   });
 
@@ -73,7 +76,27 @@ router.get("/:uid/status", async (req, res) => {
     return;
   }
 
-  res.json({ success: true, data: order });
+  // Получаем первый активный access (если есть)
+  const access = order.accesses?.[0] || null;
+
+  res.json({
+    success: true,
+    data: {
+      order_uid: order.order_uid,
+      status: order.status,
+      amount: order.amount,
+      paid_at: order.paid_at,
+      created_at: order.created_at,
+      customer_email: order.customer_email,
+      access: access
+        ? {
+            invite_link: access.invite_link,
+            expires_at: access.expires_at,
+            created_at: access.created_at,
+          }
+        : null,
+    },
+  });
 });
 
 export default router;

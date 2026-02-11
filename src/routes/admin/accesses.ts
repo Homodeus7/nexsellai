@@ -19,6 +19,7 @@ router.get("/", async (_req, res) => {
 router.post("/:id/revoke", async (req, res) => {
   const access = await prisma.access.findUnique({
     where: { id: Number(req.params.id) },
+    include: { order: { include: { plan: true } } },
   });
 
   if (!access) {
@@ -26,8 +27,11 @@ router.post("/:id/revoke", async (req, res) => {
     return;
   }
 
-  if (access.invite_link) {
-    await revokeInviteLink(access.invite_link);
+  if (access.invite_link && access.order.plan.telegram_channel_id) {
+    await revokeInviteLink(
+      access.order.plan.telegram_channel_id,
+      access.invite_link,
+    );
   }
 
   await prisma.access.update({

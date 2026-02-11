@@ -10,24 +10,25 @@ const prisma = new PrismaClient({ adapter });
 
 async function main() {
   // Seed plans - 3 тарифа × 4 валюты = 12 записей
+  // Telegram каналы для каждой группы тарифов
   const plans = [
     // Базовый тариф - 4 валюты
-    { plan_group: 'basic', name: 'Базовый', description: 'Доступ к платформе и базовым урокам', price: 99, currency: 'USD', duration_days: 365, sort_order: 1 },
-    { plan_group: 'basic', name: 'Базовый', description: 'Доступ к платформе и базовым урокам', price: 8599, currency: 'KGS', duration_days: 365, sort_order: 1 },
-    { plan_group: 'basic', name: 'Базовый', description: 'Доступ к платформе и базовым урокам', price: 49990, currency: 'KZT', duration_days: 365, sort_order: 1 },
-    { plan_group: 'basic', name: 'Базовый', description: 'Доступ к платформе и базовым урокам', price: 9900, currency: 'RUB', duration_days: 365, sort_order: 1 },
+    { plan_group: 'basic', name: 'Базовый', description: 'Доступ к платформе и базовым урокам', price: 99, currency: 'USD', duration_days: 365, sort_order: 1, telegram_channel_id: process.env.TELEGRAM_CHANNEL_BASIC || null },
+    { plan_group: 'basic', name: 'Базовый', description: 'Доступ к платформе и базовым урокам', price: 8599, currency: 'KGS', duration_days: 365, sort_order: 1, telegram_channel_id: process.env.TELEGRAM_CHANNEL_BASIC || null },
+    { plan_group: 'basic', name: 'Базовый', description: 'Доступ к платформе и базовым урокам', price: 49990, currency: 'KZT', duration_days: 365, sort_order: 1, telegram_channel_id: process.env.TELEGRAM_CHANNEL_BASIC || null },
+    { plan_group: 'basic', name: 'Базовый', description: 'Доступ к платформе и базовым урокам', price: 9900, currency: 'RUB', duration_days: 365, sort_order: 1, telegram_channel_id: process.env.TELEGRAM_CHANNEL_BASIC || null },
 
     // PRO тариф - 4 валюты
-    { plan_group: 'pro', name: 'PRO — Профессия', description: 'Полная программа «AI-менеджер маркетплейсов»', price: 199, currency: 'USD', duration_days: 365, sort_order: 2 },
-    { plan_group: 'pro', name: 'PRO — Профессия', description: 'Полная программа «AI-менеджер маркетплейсов»', price: 17399, currency: 'KGS', duration_days: 365, sort_order: 2 },
-    { plan_group: 'pro', name: 'PRO — Профессия', description: 'Полная программа «AI-менеджер маркетплейсов»', price: 99900, currency: 'KZT', duration_days: 365, sort_order: 2 },
-    { plan_group: 'pro', name: 'PRO — Профессия', description: 'Полная программа «AI-менеджер маркетплейсов»', price: 17990, currency: 'RUB', duration_days: 365, sort_order: 2 },
+    { plan_group: 'pro', name: 'PRO — Профессия', description: 'Полная программа «AI-менеджер маркетплейсов»', price: 199, currency: 'USD', duration_days: 365, sort_order: 2, telegram_channel_id: process.env.TELEGRAM_CHANNEL_PRO || null },
+    { plan_group: 'pro', name: 'PRO — Профессия', description: 'Полная программа «AI-менеджер маркетплейсов»', price: 17399, currency: 'KGS', duration_days: 365, sort_order: 2, telegram_channel_id: process.env.TELEGRAM_CHANNEL_PRO || null },
+    { plan_group: 'pro', name: 'PRO — Профессия', description: 'Полная программа «AI-менеджер маркетплейсов»', price: 99900, currency: 'KZT', duration_days: 365, sort_order: 2, telegram_channel_id: process.env.TELEGRAM_CHANNEL_PRO || null },
+    { plan_group: 'pro', name: 'PRO — Профессия', description: 'Полная программа «AI-менеджер маркетплейсов»', price: 17990, currency: 'RUB', duration_days: 365, sort_order: 2, telegram_channel_id: process.env.TELEGRAM_CHANNEL_PRO || null },
 
     // Менторство - 4 валюты
-    { plan_group: 'mentorship', name: 'Менторство', description: 'Индивидуальное сопровождение и личные сессии', price: 990, currency: 'USD', duration_days: 365, sort_order: 3 },
-    { plan_group: 'mentorship', name: 'Менторство', description: 'Индивидуальное сопровождение и личные сессии', price: 86499, currency: 'KGS', duration_days: 365, sort_order: 3 },
-    { plan_group: 'mentorship', name: 'Менторство', description: 'Индивидуальное сопровождение и личные сессии', price: 499000, currency: 'KZT', duration_days: 365, sort_order: 3 },
-    { plan_group: 'mentorship', name: 'Менторство', description: 'Индивидуальное сопровождение и личные сессии', price: 75990, currency: 'RUB', duration_days: 365, sort_order: 3 },
+    { plan_group: 'mentorship', name: 'Менторство', description: 'Индивидуальное сопровождение и личные сессии', price: 990, currency: 'USD', duration_days: 365, sort_order: 3, telegram_channel_id: process.env.TELEGRAM_CHANNEL_MENTORSHIP || null },
+    { plan_group: 'mentorship', name: 'Менторство', description: 'Индивидуальное сопровождение и личные сессии', price: 86499, currency: 'KGS', duration_days: 365, sort_order: 3, telegram_channel_id: process.env.TELEGRAM_CHANNEL_MENTORSHIP || null },
+    { plan_group: 'mentorship', name: 'Менторство', description: 'Индивидуальное сопровождение и личные сессии', price: 499000, currency: 'KZT', duration_days: 365, sort_order: 3, telegram_channel_id: process.env.TELEGRAM_CHANNEL_MENTORSHIP || null },
+    { plan_group: 'mentorship', name: 'Менторство', description: 'Индивидуальное сопровождение и личные сессии', price: 75990, currency: 'RUB', duration_days: 365, sort_order: 3, telegram_channel_id: process.env.TELEGRAM_CHANNEL_MENTORSHIP || null },
   ];
 
   for (const plan of plans) {

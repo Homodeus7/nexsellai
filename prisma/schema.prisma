@@ -7,17 +7,18 @@ datasource db {
 }
 
 model Plan {
-  id            Int      @id @default(autoincrement())
-  name          String
-  description   String?
-  price         Float
-  currency      String   @default("KZT")
-  duration_days Int
-  is_active     Boolean  @default(true)
-  plan_group    String?
-  sort_order    Int?
-  created_at    DateTime @default(now())
-  updated_at    DateTime @updatedAt
+  id                  Int      @id @default(autoincrement())
+  name                String
+  description         String?
+  price               Float
+  currency            String   @default("KZT")
+  duration_days       Int
+  is_active           Boolean  @default(true)
+  plan_group          String?
+  sort_order          Int?
+  telegram_channel_id String?
+  created_at          DateTime @default(now())
+  updated_at          DateTime @updatedAt
 
   orders Order[]
 }

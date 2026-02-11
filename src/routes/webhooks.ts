@@ -64,7 +64,19 @@ router.post("/freedom", async (req, res) => {
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + order.plan.duration_days);
 
-    const inviteLink = await createInviteLink(expiresAt);
+    // Получить ID канала из плана или использовать дефолтный
+    const channelId = order.plan.telegram_channel_id;
+    if (!channelId) {
+      const xml = buildWebhookResponse(
+        scriptName,
+        "error",
+        "Telegram channel not configured for this plan",
+      );
+      res.status(500).type("application/xml").send(xml);
+      return;
+    }
+
+    const inviteLink = await createInviteLink(channelId, expiresAt);
 
     await prisma.$transaction([
       prisma.order.update({
