@@ -9,7 +9,9 @@
     "postinstall": "prisma generate",
     "start": "node dist/server.js",
     "seed": "tsx prisma/seed.ts",
-    "studio": "npx prisma studio"
+    "studio": "npx prisma studio",
+    "change-password": "tsx scripts/change-admin-password.ts",
+    "check-admin": "tsx scripts/check-admin.ts"
   },
   "keywords": [],
   "author": "",
